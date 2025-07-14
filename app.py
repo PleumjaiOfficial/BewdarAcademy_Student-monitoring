@@ -95,25 +95,27 @@ def plot_classroom_cluster(df, focus_on):
 
     # ตรวจสอบว่ามี column TIER และมีค่าไม่ใช่ NaN หรือไม่
     use_tier = f'TIER_{focus_on}' in df.columns and df[f'TIER_{focus_on}'].notna().sum() > 0
+    preferred_order = ['Diamond', 'Platinum', 'Gold', 'Silver', 'Bronze']
 
     if use_tier:
-        # วาดตาม tier
-        for tier, group in df.groupby(f'TIER_{focus_on}'):
-            fig.add_trace(go.Scatter(
-                x=group['STEM_AVG'],
-                y=group['LANGUAGE_AVG'],
-                mode='markers+text',
-                name=tier,
-                marker=dict(
-                    size=20,
-                    color=tier_colors.get(tier, "#888888"),
-                    symbol='diamond',
-                    line=dict(width=1, color='white')
-                ),
-                text=group['PERSON_ID'],
-                textposition='top center',
-                textfont=dict(color='black', size=10)
-            ))
+        for tier in preferred_order:
+            if tier in df[f'TIER_{focus_on}'].unique():
+                group = df[df[f'TIER_{focus_on}'] == tier]
+                fig.add_trace(go.Scatter(
+                    x=group['STEM_AVG'],
+                    y=group['LANGUAGE_AVG'],
+                    mode='markers+text',
+                    name=tier,
+                    marker=dict(
+                        size=20,
+                        color=tier_colors.get(tier, "#888888"),
+                        symbol='diamond',
+                        line=dict(width=1, color='white')
+                    ),
+                    text=group['PERSON_ID'],
+                    textposition='top center',
+                    textfont=dict(color='black', size=10)
+                ))
     else:
         # ไม่มี tier — วาดแบบปกติ
         fig.add_trace(go.Scatter(
