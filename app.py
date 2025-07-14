@@ -13,6 +13,9 @@ st.set_page_config(
 )
 
 # Title and description
+
+# Header
+st.image("bd-logo.png", width=2000)  # ใส่ชื่อไฟล์และกำหนดขนาด
 st.title("Bewdar Academy Lamphun: Student Monitoring")
 st.markdown("### ระบบติดตามผลการเรียนของนักเรียนสำหรับคุณครู")
 st.markdown("---")
@@ -183,9 +186,6 @@ if st.sidebar.button("🔄 Refresh Data") or auto_refresh:
 # Main content
 if level and focus_options:
     spreadsheet_id = sheet_map[level]
-
-    # Header
-    st.image("bd-logo.png", width=2000)  # ใส่ชื่อไฟล์และกำหนดขนาด
     
     st.info(f"📊 Loading data for **{level}**")
     
