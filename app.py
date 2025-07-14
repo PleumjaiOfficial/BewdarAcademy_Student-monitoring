@@ -150,11 +150,7 @@ def plot_classroom_cluster(df, focus_on):
 st.sidebar.header("📋 Configuration")
 
 # Google Sheets credentials path
-creds_path = st.sidebar.text_input(
-    "Credentials Path", 
-    value="credentials.json",
-    help="Path to your Google Sheets credentials JSON file"
-)
+creds_path = "credentials.json"
 
 # Sheet mapping
 sheet_map = {
