@@ -187,9 +187,9 @@ focus_options = st.sidebar.multiselect(
 )
 
 # Refresh button
-if st.sidebar.button("🔄 Refresh Data"):
-    st.cache_data.clear()
-    st.rerun()
+# if st.sidebar.button("🔄 นำเข้าข้อมูลใหม่"):
+#     st.cache_data.clear()
+#     st.rerun()
 
 # Main content
 if level and focus_options:
