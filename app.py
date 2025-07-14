@@ -153,6 +153,9 @@ def plot_classroom_cluster(df, focus_on):
         height=700,
     )
 
+    # ปิด interaction
+    fig.update_layout(dragmode=False)
+
     return fig
 
 
