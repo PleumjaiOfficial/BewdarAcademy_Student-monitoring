@@ -20,28 +20,35 @@ st.title("Bewdar Academy Lamphun: Student Monitoring")
 st.markdown("### ระบบติดตามผลการเรียนของนักเรียนสำหรับคุณครู")
 st.markdown("---")
 
-# Function to load Google Sheet data
 @st.cache_data
-def load_google_sheet_by_id(spreadsheet_id, worksheet_name, creds_path="credentials.json"):
-    """Load data from Google Sheets"""
+def load_google_sheet_by_id(spreadsheet_id: str, worksheet_name: str) -> pd.DataFrame:
+    """โหลดข้อมูลจาก Google Sheet ด้วย Spreadsheet ID และชื่อ Worksheet"""
     try:
+        # Define scope
         scope = [
             "https://spreadsheets.google.com/feeds",
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
-        creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
+
+        # Authorize using credentials from secrets.toml
+        gcp_credentials = dict(st.secrets["gcp_service_account"])
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(gcp_credentials, scope)
         client = gspread.authorize(creds)
-        
+
+        # Load the specific sheet and worksheet
         sheet = client.open_by_key(spreadsheet_id)
         worksheet = sheet.worksheet(worksheet_name)
-        
-        data = worksheet.get_all_records()
-        return pd.DataFrame(data)
-    except Exception as e:
-        st.error(f"Error loading data from Google Sheets: {str(e)}")
-        return None
 
+        # Read data
+        records = worksheet.get_all_records()
+        df = pd.DataFrame(records)
+        return df
+
+    except Exception as e:
+        st.error(f"❌ Error loading data from Google Sheets: {e}")
+        return pd.DataFrame()
+    
 # Function to create the performance plot
 def plot_classroom_cluster(df, focus_on):
     """Interactive Scatter Plot (Plotly) แสดง STEM vs Language พร้อม Zoning และ Cluster ถ้ามี"""
@@ -152,14 +159,18 @@ def plot_classroom_cluster(df, focus_on):
 # Sidebar for configuration
 st.sidebar.header("📋 Configuration")
 
-# Google Sheets credentials path
-creds_path = "credentials.json"
-
-# Sheet mapping
-sheet_map = {
-    "Primary4": "1qUHxr2HmNSzuUZQ2KbcbD-3_2nWuhtVGxDIb5yGBhKg",
-    "Primary6": "11UBdhdiB7ear04ZnJ6WLN5ZIRu1SLVTOwMTqz1iKEW0"
-}
+# Sheet mapping - โหลดจาก st.secrets
+try:
+    sheet_map = dict(st.secrets["sheet_mapping"])
+    print("Sheet mapping loaded from secrets:", sheet_map)
+except Exception as e:
+    st.error(f"❌ Error loading sheet mapping from secrets: {e}")
+    # Fallback to default mapping
+    sheet_map = {
+        "Primary4": "1qUHxr2HmNSzuUZQ2KbcbD-3_2nWuhtVGxDIb5yGBhKg",
+        "Primary6": "11UBdhdiB7ear04ZnJ6WLN5ZIRu1SLVTOwMTqz1iKEW0"
+    }
+    st.warning("⚠️ ใช้ Sheet mapping เริ่มต้น เนื่องจากโหลดจาก secrets ไม่สำเร็จ")
 
 # Select level
 level = st.sidebar.selectbox(
@@ -175,11 +186,8 @@ focus_options = st.sidebar.multiselect(
     default=["ALL"]
 )
 
-# Auto-refresh checkbox
-auto_refresh = st.sidebar.checkbox("Auto-refresh data", value=False)
-
 # Refresh button
-if st.sidebar.button("🔄 Refresh Data") or auto_refresh:
+if st.sidebar.button("🔄 Refresh Data"):
     st.cache_data.clear()
     st.rerun()
 
@@ -201,7 +209,6 @@ if level and focus_options:
                 df = load_google_sheet_by_id(
                     spreadsheet_id=spreadsheet_id,
                     worksheet_name=focus_on,
-                    creds_path=creds_path
                 )
             
             if df is not None and not df.empty:
@@ -232,7 +239,7 @@ if level and focus_options:
                 
                 # Display raw data
                 with st.expander("📋 View Raw Data"):
-                    st.dataframe(df, use_container_width=True)
+                    st.dataframe(df, use_container_width=True, key=f"{focus_on}_scatter")
                 
                 
                 # Zone analysis
@@ -282,7 +289,7 @@ if level and focus_options:
                             names=list(zone_counts.keys()),
                             title="Student Distribution by Zone"
                         )
-                        st.plotly_chart(fig_pie, use_container_width=True)
+                        st.plotly_chart(fig_pie, use_container_width=True, key=f"{focus_on}_pie")
             
             else:
                 st.error(f"No data found for {focus_on}")
